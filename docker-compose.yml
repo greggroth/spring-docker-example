@@ -1,21 +1,29 @@
 version: '2'
+volumes:
+  bundle_cache:
+    driver: local
 services:
   web:
     build: .
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    environment:
+      - SPRING_TMP_PATH=tmp
+      - SPRING_SOCKET=tmp/spring.sock
+      - SPRING_PIDFILE=tmp/spring.pid
     volumes:
       - .:/app
-    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+      - bundle_cache:/usr/local/bundle
     ports:
       - "3000:3000"
-
+    depends_on:
+      - spring
   spring:
     build: .
+    command: bundle exec spring server
+    environment:
+      - SPRING_TMP_PATH=tmp
+      - SPRING_SOCKET=tmp/spring.sock
+      - SPRING_PIDFILE=tmp/spring.pid
     volumes:
       - .:/app
-    command: spring server
-
-    # This ensures that the pid namespace is shared between the host
-    # and the container. It's not necessary to be able to run spring
-    # commands, but it is necessary for "spring status" and "spring stop"
-    # to work properly.
-    pid: host
+      - bundle_cache:/usr/local/bundle
